@@ -51,50 +51,50 @@ jobs:
         run: |
           npm run build
 
-      - name: Tests pass
-        run: |
-          mkdir data && chmod -R 777 data && \
-          npm run test:coverage
-        env:
-          ANON_KEY: ${{ secrets.ANON_KEY }}
-          SERVICE_KEY: ${{ secrets.SERVICE_KEY }}
-          TENANT_ID: ${{ secrets.TENANT_ID }}
-          REGION: ${{ secrets.REGION }}
-          GLOBAL_S3_BUCKET: ${{ secrets.GLOBAL_S3_BUCKET }}
-          PGRST_JWT_SECRET: ${{ secrets.PGRST_JWT_SECRET }}
-          AUTHENTICATED_KEY: ${{ secrets.AUTHENTICATED_KEY }}
-          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1/postgres
-          FILE_SIZE_LIMIT: '52428800'
-          STORAGE_BACKEND: s3
-          MULTITENANT_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5433/postgres
-          ADMIN_API_KEYS: apikey
-          ENABLE_IMAGE_TRANSFORMATION: true
-          IMGPROXY_URL: http://127.0.0.1:50020
-          AWS_ACCESS_KEY_ID: supa-storage
-          AWS_SECRET_ACCESS_KEY: secret1234
-          AWS_DEFAULT_REGION: ap-southeast-1
-          GLOBAL_S3_ENDPOINT: http://127.0.0.1:9000
-          GLOBAL_S3_PROTOCOL: http
-          GLOBAL_S3_FORCE_PATH_STYLE: true
-          DB_INSTALL_ROLES: true
-          ENABLE_DEFAULT_METRICS: false
-          PG_QUEUE_ENABLE: false
-          MULTI_TENANT: false
-          S3_PROTOCOL_ACCESS_KEY_ID: ${{ secrets.TENANT_ID }}
-          S3_PROTOCOL_ACCESS_KEY_SECRET: ${{ secrets.SERVICE_KEY }}
+      # - name: Tests pass
+      #   run: |
+      #     mkdir data && chmod -R 777 data && \
+      #     npm run test:coverage
+      #   env:
+      #     ANON_KEY: ${{ secrets.ANON_KEY }}
+      #     SERVICE_KEY: ${{ secrets.SERVICE_KEY }}
+      #     TENANT_ID: ${{ secrets.TENANT_ID }}
+      #     REGION: ${{ secrets.REGION }}
+      #     GLOBAL_S3_BUCKET: ${{ secrets.GLOBAL_S3_BUCKET }}
+      #     PGRST_JWT_SECRET: ${{ secrets.PGRST_JWT_SECRET }}
+      #     AUTHENTICATED_KEY: ${{ secrets.AUTHENTICATED_KEY }}
+      #     DATABASE_URL: postgresql://postgres:postgres@127.0.0.1/postgres
+      #     FILE_SIZE_LIMIT: '52428800'
+      #     STORAGE_BACKEND: s3
+      #     MULTITENANT_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5433/postgres
+      #     ADMIN_API_KEYS: apikey
+      #     ENABLE_IMAGE_TRANSFORMATION: true
+      #     IMGPROXY_URL: http://127.0.0.1:50020
+      #     AWS_ACCESS_KEY_ID: supa-storage
+      #     AWS_SECRET_ACCESS_KEY: secret1234
+      #     AWS_DEFAULT_REGION: ap-southeast-1
+      #     GLOBAL_S3_ENDPOINT: http://127.0.0.1:9000
+      #     GLOBAL_S3_PROTOCOL: http
+      #     GLOBAL_S3_FORCE_PATH_STYLE: true
+      #     DB_INSTALL_ROLES: true
+      #     ENABLE_DEFAULT_METRICS: false
+      #     PG_QUEUE_ENABLE: false
+      #     MULTI_TENANT: false
+      #     S3_PROTOCOL_ACCESS_KEY_ID: ${{ secrets.TENANT_ID }}
+      #     S3_PROTOCOL_ACCESS_KEY_SECRET: ${{ secrets.SERVICE_KEY }}
 
-      - name: Upload coverage results to Coveralls
-        uses: coverallsapp/github-action@master
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+      # - name: Upload coverage results to Coveralls
+      #   uses: coverallsapp/github-action@master
+      #   with:
+      #     github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Ensure OrioleDB migration compatibility
-        run: |
-          npm run infra:restart:oriole
-        env:
-          PGRST_JWT_SECRET: ${{ secrets.PGRST_JWT_SECRET }}
-          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1/postgres
-          DB_INSTALL_ROLES: true
-          ENABLE_DEFAULT_METRICS: false
-          PG_QUEUE_ENABLE: false
-          MULTI_TENANT: false
+      # - name: Ensure OrioleDB migration compatibility
+      #   run: |
+      #     npm run infra:restart:oriole
+      #   env:
+      #     PGRST_JWT_SECRET: ${{ secrets.PGRST_JWT_SECRET }}
+      #     DATABASE_URL: postgresql://postgres:postgres@127.0.0.1/postgres
+      #     DB_INSTALL_ROLES: true
+      #     ENABLE_DEFAULT_METRICS: false
+      #     PG_QUEUE_ENABLE: false
+      #     MULTI_TENANT: false

@@ -26,6 +26,8 @@ import {
 } from './lifecycle'
 import { TenantConnection, PubSub } from '@internal/database'
 import { S3Store } from '@tus/s3-store'
+import { GCSStore } from '@tus/gcs-store'
+import { Storage as GoogleCloudStorage } from '@google-cloud/storage'
 import { NodeHttpHandler } from '@smithy/node-http-handler'
 import { ROUTE_OPERATIONS } from '../operations'
 import * as https from 'node:https'
@@ -38,6 +40,9 @@ const {
   storageS3ForcePathStyle,
   storageS3Region,
   storageS3ClientTimeout,
+  storageGcsProjectId,
+  storageGcsKeyFilePath,
+  storageGcsCredentials,
   tusUrlExpiryMs,
   tusPath,
   tusPartSize,
@@ -82,6 +87,36 @@ function createTusStore(agent: { httpsAgent: https.Agent; httpAgent: http.Agent 
     })
   }
 
+  if (storageBackendType === 'gcs') {
+    // Create GCS storage client with authentication
+    const gcsConfig: any = {}
+    
+    // Set project ID if provided
+    if (storageGcsProjectId) {
+      gcsConfig.projectId = storageGcsProjectId
+    }
+    
+    // Authentication: prefer key file over inline credentials
+    if (storageGcsKeyFilePath) {
+      gcsConfig.keyFilename = storageGcsKeyFilePath
+    } else if (storageGcsCredentials) {
+      try {
+        gcsConfig.credentials = JSON.parse(storageGcsCredentials)
+      } catch (error) {
+        throw new Error('Invalid STORAGE_GCS_CREDENTIALS JSON format')
+      }
+    }
+    // If neither is provided, use default credentials (e.g., from environment)
+    
+    const storage = new GoogleCloudStorage(gcsConfig)
+    const bucket = storage.bucket(storageS3Bucket) // Reuse S3 bucket config for GCS
+    
+    return new GCSStore({
+      bucket: bucket,
+    })
+  }
+
+  // Fallback to FileStore for other backends or when TUS is not supported  
   return new FileStore({
     directory: storageFilePath + '/' + storageS3Bucket,
   })
@@ -145,8 +180,10 @@ export default async function routes(fastify: FastifyInstance) {
   const lockNotifier = new LockNotifier(PubSub)
   await lockNotifier.subscribe()
 
-  const agent = createAgent('s3_tus', {
-    maxSockets: storageS3MaxSockets,
+  const agentName = storageBackendType === 'gcs' ? 'gcs_tus' : 's3_tus'
+
+  const agent = createAgent(agentName, {
+    maxSockets: storageS3MaxSockets, // Reuse S3 max sockets config
   })
   agent.monitor()
 

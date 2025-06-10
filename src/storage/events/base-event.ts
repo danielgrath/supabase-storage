@@ -84,8 +84,10 @@ export abstract class BaseEvent<T extends Omit<BasePayload, '$version'>> extends
       return storageBackend
     }
 
-    const httpAgent = createAgent('s3_worker', {
-      maxSockets: storageS3MaxSockets,
+    const agentName = storageBackendType === 'gcs' ? 'gcs_worker' : 's3_worker'
+
+    const httpAgent = createAgent(agentName, {
+      maxSockets: storageS3MaxSockets, // Reuse S3 max sockets config
     })
 
     storageBackend = createStorageBackend(storageBackendType, {

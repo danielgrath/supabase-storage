@@ -8,9 +8,9 @@ import { Storage } from '@storage/storage'
 import { Uploader, validateMimeType } from '@storage/uploader'
 import { UploadId } from '@storage/protocols/tus'
 
-import { getConfig } from '../../../config'
+import { getConfig, getStorageBucket } from '../../../config'
 
-const { storageS3Bucket, tusPath, requestAllowXForwardedPrefix } = getConfig()
+const { tusPath, requestAllowXForwardedPrefix } = getConfig()
 const reExtractFileID = /([^/]+)\/?$/
 
 export const SIGNED_URL_SUFFIX = '/sign'
@@ -215,10 +215,11 @@ export async function onUploadFinish(
   const resourceId = UploadId.fromString(upload.id)
 
   try {
-    const s3Key = `${req.upload.tenantId}/${resourceId.bucket}/${resourceId.objectName}`
+    const objectKey = `${req.upload.tenantId}/${resourceId.bucket}/${resourceId.objectName}`
+    const bucketName = getStorageBucket()
     const metadata = await req.upload.storage.backend.headObject(
-      storageS3Bucket,
-      s3Key,
+      bucketName,
+      objectKey,
       resourceId.version
     )
 

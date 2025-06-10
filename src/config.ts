@@ -2,7 +2,7 @@ import dotenv from 'dotenv'
 import type { DBMigration } from '@internal/database/migrations'
 import { SignJWT } from 'jose'
 
-export type StorageBackendType = 'file' | 's3'
+export type StorageBackendType = 'file' | 's3' | 'gcs'
 export enum MultitenantMigrationStrategy {
   PROGRESSIVE = 'progressive',
   ON_REQUEST = 'on_request',
@@ -68,6 +68,9 @@ type StorageConfigType = {
   storageS3ForcePathStyle?: boolean
   storageS3Region: string
   storageS3ClientTimeout: number
+  storageGcsProjectId?: string
+  storageGcsKeyFilePath?: string
+  storageGcsCredentials?: string
   isMultitenant: boolean
   jwtSecret: string
   jwtAlgorithm: string
@@ -213,6 +216,12 @@ export function mergeConfig(newConfig: Partial<StorageConfigType>) {
   config = { ...config, ...(newConfig as Required<StorageConfigType>) }
 }
 
+export function getStorageBucket(): string {
+  const config = getConfig()
+  // Both GCS and S3 use the same bucket config
+  return config.storageS3Bucket || 'default-bucket'
+}
+
 export function getConfig(options?: { reload?: boolean }): StorageConfigType {
   if (config && !options?.reload) {
     return config
@@ -333,6 +342,11 @@ export function getConfig(options?: { reload?: boolean }): StorageConfigType {
       'true',
     storageS3Region: getOptionalConfigFromEnv('STORAGE_S3_REGION', 'REGION') as string,
     storageS3ClientTimeout: Number(getOptionalConfigFromEnv('STORAGE_S3_CLIENT_TIMEOUT') || `0`),
+
+    // Storage - GCS (reuses S3 bucket, region, max sockets, and timeout configs)
+    storageGcsProjectId: getOptionalConfigFromEnv('STORAGE_GCS_PROJECT_ID', 'GOOGLE_CLOUD_PROJECT'),
+    storageGcsKeyFilePath: getOptionalConfigFromEnv('STORAGE_GCS_KEY_FILE_PATH', 'GOOGLE_APPLICATION_CREDENTIALS'),
+    storageGcsCredentials: getOptionalConfigFromEnv('STORAGE_GCS_CREDENTIALS'),
 
     // DB - Migrations
     dbAnonRole: getOptionalConfigFromEnv('DB_ANON_ROLE') || 'anon',
