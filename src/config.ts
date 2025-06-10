@@ -351,8 +351,11 @@ export function getConfig(options?: { reload?: boolean }): StorageConfigType {
       'GOOGLE_APPLICATION_CREDENTIALS'
     ),
     storageGcsCredentials: getOptionalConfigFromEnv('STORAGE_GCS_CREDENTIALS'),
-    storageGcsUseAdc: 
-      getOptionalConfigFromEnv('STORAGE_GCS_USE_ADC', 'STORAGE_GCS_USE_APPLICATION_DEFAULT_CREDENTIALS') === 'true',
+    storageGcsUseAdc:
+      getOptionalConfigFromEnv(
+        'STORAGE_GCS_USE_ADC',
+        'STORAGE_GCS_USE_APPLICATION_DEFAULT_CREDENTIALS'
+      ) === 'true',
 
     // DB - Migrations
     dbAnonRole: getOptionalConfigFromEnv('DB_ANON_ROLE') || 'anon',

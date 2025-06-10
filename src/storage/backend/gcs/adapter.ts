@@ -733,7 +733,9 @@ export class GCSBackend implements StorageBackendAdapter {
     // Handle authentication according to Google Cloud best practices
     if (options.useApplicationDefaultCredentials === true) {
       // Explicitly use ADC - don't set any auth options, let the client library handle it
-      console.log('GCS Backend: Using Application Default Credentials (ADC) - letting client library auto-detect')
+      console.log(
+        'GCS Backend: Using Application Default Credentials (ADC) - letting client library auto-detect'
+      )
     } else if (options.keyFilePath) {
       // Use service account key file
       clientOptions.keyFilename = options.keyFilePath
@@ -747,7 +749,9 @@ export class GCSBackend implements StorageBackendAdapter {
         } catch {
           // If parsing fails, assume it's a file path
           clientOptions.keyFilename = options.credentials
-          console.log(`GCS Backend: Using service account key file from string: ${options.credentials}`)
+          console.log(
+            `GCS Backend: Using service account key file from string: ${options.credentials}`
+          )
         }
       } else {
         clientOptions.credentials = options.credentials
@@ -756,7 +760,9 @@ export class GCSBackend implements StorageBackendAdapter {
     } else {
       // No explicit credentials - let ADC handle it (Google's recommended approach)
       // The Storage client will automatically use ADC per Google's documentation
-      console.log('GCS Backend: No explicit credentials, using Application Default Credentials (recommended)')
+      console.log(
+        'GCS Backend: No explicit credentials, using Application Default Credentials (recommended)'
+      )
     }
 
     // Configure timeout if provided

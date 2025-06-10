@@ -116,7 +116,9 @@ function createTusStore(agent: { httpsAgent: https.Agent; httpAgent: http.Agent 
       }
     } else {
       // Fallback to ADC
-      console.log('TUS GCS Store: No explicit credentials, falling back to Application Default Credentials (ADC)')
+      console.log(
+        'TUS GCS Store: No explicit credentials, falling back to Application Default Credentials (ADC)'
+      )
     }
 
     const storage = new GoogleCloudStorage(gcsConfig)
