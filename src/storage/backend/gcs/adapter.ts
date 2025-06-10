@@ -41,6 +41,8 @@ export interface GCSClientOptions {
   // HMAC keys for GCS XML API (multipart uploads) - reuse S3 protocol keys
   accessKey?: string
   secretKey?: string
+  // ADC support
+  useApplicationDefaultCredentials?: boolean
 }
 
 /**
@@ -57,14 +59,26 @@ export interface GCSClientOptions {
  *    - Uses HMAC keys for authentication
  *
  * Configuration Requirements:
- * - For GCS operations: Service account key file or inline credentials
+ * - For GCS operations: Service account key file, inline credentials, or ADC
  * - For multipart operations: HMAC access key and secret key
+ *
+ * Authentication Methods (following Google Cloud best practices):
+ * 1. useApplicationDefaultCredentials=true - Uses pure ADC (recommended for production)
+ * 2. keyFilePath - Service account key file path (for development/testing)
+ * 3. credentials - Inline service account credentials (for containerized apps)
+ * 4. Automatic ADC fallback - Lets client library auto-detect (Google's recommended default)
  *
  * Environment Variables:
  * - STORAGE_GCS_PROJECT_ID (optional)
- * - STORAGE_GCS_KEY_FILE_PATH or STORAGE_GCS_CREDENTIALS
+ * - STORAGE_GCS_KEY_FILE_PATH or STORAGE_GCS_CREDENTIALS (if not using ADC)
+ * - STORAGE_GCS_USE_ADC=true (to explicitly enable ADC)
  * - S3_PROTOCOL_ACCESS_KEY_ID (HMAC access key)
  * - S3_PROTOCOL_ACCESS_KEY_SECRET (HMAC secret key)
+ *
+ * For Workload Identity (recommended for GKE/Cloud Run):
+ * - Set useApplicationDefaultCredentials=true or leave credentials empty
+ * - Ensure your K8s service account is bound to a GCP service account
+ * - No need for explicit key files or credential strings
  */
 export class GCSBackend implements StorageBackendAdapter {
   client: Storage
@@ -711,41 +725,47 @@ export class GCSBackend implements StorageBackendAdapter {
   protected createGCSClient(options: GCSClientOptions & { name: string }): Storage {
     const clientOptions: any = {}
 
+    // Set project ID if provided (recommended but optional with ADC)
     if (options.projectId) {
       clientOptions.projectId = options.projectId
     }
 
-    if (options.keyFilePath) {
+    // Handle authentication according to Google Cloud best practices
+    if (options.useApplicationDefaultCredentials === true) {
+      // Explicitly use ADC - don't set any auth options, let the client library handle it
+      console.log('GCS Backend: Using Application Default Credentials (ADC) - letting client library auto-detect')
+    } else if (options.keyFilePath) {
+      // Use service account key file
       clientOptions.keyFilename = options.keyFilePath
+      console.log(`GCS Backend: Using service account key file: ${options.keyFilePath}`)
     } else if (options.credentials) {
       // Handle credentials as JSON string or object
       if (typeof options.credentials === 'string') {
         try {
           clientOptions.credentials = JSON.parse(options.credentials)
+          console.log('GCS Backend: Using inline service account credentials (JSON string)')
         } catch {
           // If parsing fails, assume it's a file path
           clientOptions.keyFilename = options.credentials
+          console.log(`GCS Backend: Using service account key file from string: ${options.credentials}`)
         }
       } else {
         clientOptions.credentials = options.credentials
+        console.log('GCS Backend: Using inline service account credentials (object)')
       }
-    }
-
-    // Configure HTTP agent for the auth client
-    if (options.httpAgent) {
-      clientOptions.authClient = new GoogleAuth({
-        ...clientOptions,
-        // Google Auth Library supports custom agents
-        transporterOptions: {
-          agent: options.httpAgent.httpsAgent,
-        },
-      })
+    } else {
+      // No explicit credentials - let ADC handle it (Google's recommended approach)
+      // The Storage client will automatically use ADC per Google's documentation
+      console.log('GCS Backend: No explicit credentials, using Application Default Credentials (recommended)')
     }
 
     // Configure timeout if provided
     if (options.requestTimeout) {
       clientOptions.timeout = options.requestTimeout
     }
+
+    // Note: Custom HTTP agent configuration is skipped for simplicity
+    // Google Cloud client libraries handle connection pooling and agents internally
 
     return new Storage(clientOptions)
   }

@@ -43,6 +43,7 @@ const {
   storageGcsProjectId,
   storageGcsKeyFilePath,
   storageGcsCredentials,
+  storageGcsUseAdc,
   tusUrlExpiryMs,
   tusPath,
   tusPartSize,
@@ -96,17 +97,27 @@ function createTusStore(agent: { httpsAgent: https.Agent; httpAgent: http.Agent 
       gcsConfig.projectId = storageGcsProjectId
     }
 
-    // Authentication: prefer key file over inline credentials
-    if (storageGcsKeyFilePath) {
+    // Handle different authentication methods
+    if (storageGcsUseAdc === true) {
+      // Explicitly use Application Default Credentials (ADC)
+      // Don't set keyFilename or credentials - let ADC handle it
+      console.log('TUS GCS Store: Using Application Default Credentials (ADC)')
+    } else if (storageGcsKeyFilePath) {
+      // Use service account key file
       gcsConfig.keyFilename = storageGcsKeyFilePath
+      console.log(`TUS GCS Store: Using service account key file: ${storageGcsKeyFilePath}`)
     } else if (storageGcsCredentials) {
+      // Use inline credentials
       try {
         gcsConfig.credentials = JSON.parse(storageGcsCredentials)
+        console.log('TUS GCS Store: Using inline service account credentials')
       } catch (error) {
         throw new Error('Invalid STORAGE_GCS_CREDENTIALS JSON format')
       }
+    } else {
+      // Fallback to ADC
+      console.log('TUS GCS Store: No explicit credentials, falling back to Application Default Credentials (ADC)')
     }
-    // If neither is provided, use default credentials (e.g., from environment)
 
     const storage = new GoogleCloudStorage(gcsConfig)
     const bucket = storage.bucket(storageS3Bucket) // Reuse S3 bucket config for GCS

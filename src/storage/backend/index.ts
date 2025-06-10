@@ -17,6 +17,7 @@ const {
   storageGcsProjectId,
   storageGcsKeyFilePath,
   storageGcsCredentials,
+  storageGcsUseAdc,
   s3ProtocolAccessKeyId,
   s3ProtocolAccessKeySecret,
 } = getConfig()
@@ -40,6 +41,7 @@ export function createStorageBackend<Type extends StorageBackendType>(
       projectId: storageGcsProjectId,
       keyFilePath: storageGcsKeyFilePath,
       credentials: storageGcsCredentials,
+      useApplicationDefaultCredentials: storageGcsUseAdc,
       requestTimeout: storageS3ClientTimeout, // Reuse S3 timeout config
       // Reuse S3 protocol access keys as HMAC keys for GCS XML API
       accessKey: s3ProtocolAccessKeyId,
