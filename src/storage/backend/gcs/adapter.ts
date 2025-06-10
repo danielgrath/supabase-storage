@@ -1,4 +1,11 @@
-import { Storage, Bucket, File, GetSignedUrlConfig, CreateResumableUploadOptions, TransferManager } from '@google-cloud/storage'
+import {
+  Storage,
+  Bucket,
+  File,
+  GetSignedUrlConfig,
+  CreateResumableUploadOptions,
+  TransferManager,
+} from '@google-cloud/storage'
 import { GoogleAuth } from 'google-auth-library'
 import {
   S3Client,
@@ -39,20 +46,20 @@ export interface GCSClientOptions {
 /**
  * GCSBackend
  * Interacts with Google Cloud Storage using a hybrid approach:
- * 
+ *
  * 1. Native GCS SDK for most operations (getObject, uploadObject, etc.)
  *    - Supports GCS-specific features like generation-based versioning
  *    - Efficient streaming and metadata handling
- * 
+ *
  * 2. AWS S3 SDK via GCS XML API for multipart operations
  *    - Full S3 multipart protocol compatibility
  *    - Works with existing S3 routes without changes
  *    - Uses HMAC keys for authentication
- * 
+ *
  * Configuration Requirements:
  * - For GCS operations: Service account key file or inline credentials
  * - For multipart operations: HMAC access key and secret key
- * 
+ *
  * Environment Variables:
  * - STORAGE_GCS_PROJECT_ID (optional)
  * - STORAGE_GCS_KEY_FILE_PATH or STORAGE_GCS_CREDENTIALS
@@ -63,7 +70,7 @@ export class GCSBackend implements StorageBackendAdapter {
   client: Storage
   agent: InstrumentedAgent
   s3Client: S3Client
-  
+
   constructor(options: GCSClientOptions) {
     this.agent =
       options.httpAgent ??
@@ -123,17 +130,17 @@ export class GCSBackend implements StorageBackendAdapter {
 
       const readStreamOptions: any = {}
       let isRangeRequest = false
-      
+
       if (headers?.range) {
         isRangeRequest = true
         const range = headers.range.replace('bytes=', '')
-        const [start, end] = range.split('-').map(n => n ? parseInt(n) : undefined)
+        const [start, end] = range.split('-').map((n) => (n ? parseInt(n) : undefined))
         if (start !== undefined) readStreamOptions.start = start
         if (end !== undefined) readStreamOptions.end = end
       }
 
       const readStream = file.createReadStream(readStreamOptions)
-      
+
       // Handle abort signal
       if (signal) {
         signal.addEventListener('abort', () => {
@@ -145,7 +152,7 @@ export class GCSBackend implements StorageBackendAdapter {
       // Note: This adds an extra round-trip but GCS Node.js client doesn't support
       // conditional headers on createReadStream yet
       const [metadata] = await file.getMetadata()
-      
+
       // Check conditional headers
       if (headers?.ifNoneMatch && headers.ifNoneMatch === metadata.etag) {
         return {
@@ -186,10 +193,10 @@ export class GCSBackend implements StorageBackendAdapter {
       // Calculate content length for range requests
       let contentLength = parseInt(String(metadata.size)) || 0
       let contentRange: string | undefined
-      
+
       if (isRangeRequest && readStreamOptions.start !== undefined) {
         const start = readStreamOptions.start
-        const end = readStreamOptions.end ?? (contentLength - 1)
+        const end = readStreamOptions.end ?? contentLength - 1
         contentLength = end - start + 1
         contentRange = `bytes ${start}-${end}/${metadata.size}`
       }
@@ -256,9 +263,13 @@ export class GCSBackend implements StorageBackendAdapter {
 
       // Handle abort signal
       if (signal) {
-        signal.addEventListener('abort', () => {
-          writeStream.destroy()
-        }, { once: true })
+        signal.addEventListener(
+          'abort',
+          () => {
+            writeStream.destroy()
+          },
+          { once: true }
+        )
       }
 
       // Pipe the data and wait for completion
@@ -332,7 +343,7 @@ export class GCSBackend implements StorageBackendAdapter {
       const destinationFile = bucketRef.file(destination)
 
       const copyOptions: any = {}
-      
+
       if (metadata) {
         copyOptions.metadata = {}
         if (metadata.mimetype) copyOptions.metadata.contentType = metadata.mimetype
@@ -357,7 +368,7 @@ export class GCSBackend implements StorageBackendAdapter {
 
       // Get metadata of the copied file
       const [copiedMetadata] = await destinationFile.getMetadata()
-      
+
       return {
         httpStatusCode: 200,
         eTag: copiedMetadata.etag || '',
@@ -380,7 +391,7 @@ export class GCSBackend implements StorageBackendAdapter {
   ): Promise<{ keys: { name: string; size: number }[]; nextToken?: string }> {
     try {
       const bucketRef = this.client.bucket(bucket)
-      
+
       const listOptions: any = {}
       if (options?.prefix) listOptions.prefix = options.prefix
       if (options?.delimiter) listOptions.delimiter = options.delimiter
@@ -391,7 +402,7 @@ export class GCSBackend implements StorageBackendAdapter {
 
       let filteredFiles = files
       if (options?.beforeDate) {
-        filteredFiles = files.filter(file => {
+        filteredFiles = files.filter((file) => {
           const metadata = file.metadata
           if (metadata.timeCreated) {
             const fileDate = new Date(metadata.timeCreated)
@@ -401,12 +412,12 @@ export class GCSBackend implements StorageBackendAdapter {
         })
       }
 
-      const keys = filteredFiles.map(file => {
+      const keys = filteredFiles.map((file) => {
         let name = file.name
         if (options?.prefix) {
           name = name.replace(options.prefix, '').replace('/', '')
         }
-        
+
         return {
           name: name,
           size: parseInt(String(file.metadata.size)) || 0,
@@ -430,7 +441,7 @@ export class GCSBackend implements StorageBackendAdapter {
   async deleteObjects(bucket: string, prefixes: string[]): Promise<void> {
     try {
       const bucketRef = this.client.bucket(bucket)
-      
+
       // Delete files in parallel
       const deletePromises = prefixes.map(async (prefix) => {
         try {
@@ -465,9 +476,9 @@ export class GCSBackend implements StorageBackendAdapter {
       const bucketRef = this.client.bucket(bucket)
       const fileOptions = version ? { generation: Number(version) } : undefined
       const file = bucketRef.file(key, fileOptions)
-      
+
       const [metadata] = await file.getMetadata()
-      
+
       return {
         cacheControl: metadata.cacheControl || 'no-cache',
         mimetype: metadata.contentType || 'application/octet-stream',
@@ -496,7 +507,7 @@ export class GCSBackend implements StorageBackendAdapter {
       const bucketRef = this.client.bucket(bucket)
       const fileOptions = version ? { generation: Number(version) } : undefined
       const file = bucketRef.file(key, fileOptions)
-      
+
       const config: GetSignedUrlConfig = {
         version: 'v4',
         action: 'read',
@@ -529,7 +540,7 @@ export class GCSBackend implements StorageBackendAdapter {
       })
 
       const response = await this.s3Client.send(command)
-      
+
       if (!response.UploadId) {
         throw ERRORS.InvalidUploadId()
       }
@@ -581,7 +592,9 @@ export class GCSBackend implements StorageBackendAdapter {
     uploadId: string,
     version: string,
     parts: UploadPart[]
-  ): Promise<Omit<UploadPart, 'PartNumber'> & { location?: string; bucket?: string; version: string }> {
+  ): Promise<
+    Omit<UploadPart, 'PartNumber'> & { location?: string; bucket?: string; version: string }
+  > {
     try {
       const command = new CompleteMultipartUploadCommand({
         Bucket: bucketName,
@@ -636,7 +649,9 @@ export class GCSBackend implements StorageBackendAdapter {
         UploadId: uploadId,
         PartNumber: partNumber,
         CopySource: `${bucketName}/${sourceKey}`,
-        CopySourceRange: bytesRange ? `bytes=${bytesRange.fromByte}-${bytesRange.toByte}` : undefined,
+        CopySourceRange: bytesRange
+          ? `bytes=${bytesRange.fromByte}-${bytesRange.toByte}`
+          : undefined,
       })
 
       const response = await this.s3Client.send(command)
@@ -661,7 +676,7 @@ export class GCSBackend implements StorageBackendAdapter {
   /**
    * Helper method to perform chunked uploads using TransferManager
    * This is the recommended way to upload large files to GCS
-   * 
+   *
    * @param bucketName - The bucket to upload to
    * @param key - The destination object name
    * @param filePath - Path to the local file to upload
@@ -681,7 +696,7 @@ export class GCSBackend implements StorageBackendAdapter {
   ): Promise<void> {
     const bucket = this.client.bucket(bucketName)
     const transferManager = new TransferManager(bucket)
-    
+
     await transferManager.uploadFileInChunks(filePath, {
       uploadName: key,
       chunkSizeBytes: options?.chunkSizeBytes || 32 * 1024 * 1024, // Default 32MB
@@ -734,4 +749,4 @@ export class GCSBackend implements StorageBackendAdapter {
 
     return new Storage(clientOptions)
   }
-} 
+}

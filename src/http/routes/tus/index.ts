@@ -90,12 +90,12 @@ function createTusStore(agent: { httpsAgent: https.Agent; httpAgent: http.Agent 
   if (storageBackendType === 'gcs') {
     // Create GCS storage client with authentication
     const gcsConfig: any = {}
-    
+
     // Set project ID if provided
     if (storageGcsProjectId) {
       gcsConfig.projectId = storageGcsProjectId
     }
-    
+
     // Authentication: prefer key file over inline credentials
     if (storageGcsKeyFilePath) {
       gcsConfig.keyFilename = storageGcsKeyFilePath
@@ -107,16 +107,16 @@ function createTusStore(agent: { httpsAgent: https.Agent; httpAgent: http.Agent 
       }
     }
     // If neither is provided, use default credentials (e.g., from environment)
-    
+
     const storage = new GoogleCloudStorage(gcsConfig)
     const bucket = storage.bucket(storageS3Bucket) // Reuse S3 bucket config for GCS
-    
+
     return new GCSStore({
       bucket: bucket,
     })
   }
 
-  // Fallback to FileStore for other backends or when TUS is not supported  
+  // Fallback to FileStore for other backends or when TUS is not supported
   return new FileStore({
     directory: storageFilePath + '/' + storageS3Bucket,
   })

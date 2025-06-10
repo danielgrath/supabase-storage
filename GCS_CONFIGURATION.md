@@ -110,8 +110,7 @@ Or these specific permissions:
 
 1. Change `STORAGE_BACKEND` from `s3` to `gcs`
 2. Keep `STORAGE_S3_BUCKET` and `STORAGE_S3_REGION` (update region to GCS format)
-3. Remove AWS credentials (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`)
-4. Add GCS authentication (`STORAGE_GCS_KEY_FILE_PATH` or `STORAGE_GCS_CREDENTIALS`)
-5. Remove S3-specific configs (`STORAGE_S3_ENDPOINT`, `STORAGE_S3_FORCE_PATH_STYLE`)
+3. Add GCS authentication (`STORAGE_GCS_KEY_FILE_PATH` or `STORAGE_GCS_CREDENTIALS`)
+4. Remove S3-specific configs (`STORAGE_S3_ENDPOINT`, `STORAGE_S3_FORCE_PATH_STYLE`)
 
 The migration is minimal because bucket name, region, and connection settings are reused! 

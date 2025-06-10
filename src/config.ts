@@ -345,7 +345,10 @@ export function getConfig(options?: { reload?: boolean }): StorageConfigType {
 
     // Storage - GCS (reuses S3 bucket, region, max sockets, and timeout configs)
     storageGcsProjectId: getOptionalConfigFromEnv('STORAGE_GCS_PROJECT_ID', 'GOOGLE_CLOUD_PROJECT'),
-    storageGcsKeyFilePath: getOptionalConfigFromEnv('STORAGE_GCS_KEY_FILE_PATH', 'GOOGLE_APPLICATION_CREDENTIALS'),
+    storageGcsKeyFilePath: getOptionalConfigFromEnv(
+      'STORAGE_GCS_KEY_FILE_PATH',
+      'GOOGLE_APPLICATION_CREDENTIALS'
+    ),
     storageGcsCredentials: getOptionalConfigFromEnv('STORAGE_GCS_CREDENTIALS'),
 
     // DB - Migrations
