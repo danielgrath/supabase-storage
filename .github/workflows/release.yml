@@ -53,7 +53,7 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: |
-            ghcr.io/quickguidehealth/storage-api
+            ghcr.io/QuickGuideHealth/storage-api
           tags: |
             type=raw,value=v${{ needs.release.outputs.version }}
             type=raw,value=latest
