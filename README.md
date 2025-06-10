@@ -11,6 +11,7 @@ A scalable, light-weight object storage service.
 - Authorization rules are written as Postgres Row Level Security policies
 - Integrates with S3 Compatible Storages
 - Extremely lightweight and performant
+- Extension for Google Cloud Storage
 
 
 **Supported Protocols**
